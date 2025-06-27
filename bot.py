@@ -4,6 +4,7 @@ import telebot
 from telebot.types import Message, InputFile
 from snusbase import search_domains
 import logging
+from datetime import datetime
 
 # Cấu hình logging cho ứng dụng
 logging.basicConfig(
@@ -58,7 +59,8 @@ def handle_document(message: Message):
     with open(file_path, "r", encoding="utf-8") as f:
         domains = [line.strip() for line in f if line.strip()]
     batch_size = 100
-    result_file = "/tmp/result_emails.txt"
+    result_filename = f"found_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    result_file = f"/tmp/{result_filename}"
     written_emails = set()
     try:
         with open(result_file, "a", encoding="utf-8") as f_result:
