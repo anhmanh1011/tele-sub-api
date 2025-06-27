@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Cấu hình môi trường ảo
+venv/
+ENV/
+.env
+
+# Log files
+*.log
+
+# File cấu hình bí mật
+config.json
+
+# File tạm
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# File kết quả
+/tmp/
+result_emails.txt
+
+# VSCode
+.vscode/ 
