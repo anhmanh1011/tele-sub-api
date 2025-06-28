@@ -77,8 +77,18 @@ def handle_document(message: Message):
                 except Exception as e:
                     user_id = message.from_user.id if message.from_user else "unknown"
                     logging.error(f"Lỗi khi truy vấn batch {i//batch_size+1} cho user {user_id}: {e}")
-                    bot.reply_to(message, f"Lỗi khi truy vấn batch {i//batch_size+1}: {e}")
-                    # break
+                    
+                    # Thông báo chi tiết hơn cho người dùng
+                    error_msg = str(e)
+                    if "Không thể kết nối với Snusbase API" in error_msg:
+                        bot.reply_to(message, f"⚠️ Lỗi batch {i//batch_size+1}: Đã thử tất cả API key nhưng không thành công. Vui lòng kiểm tra lại các key trong config.json")
+                    elif "401" in error_msg or "429" in error_msg:
+                        bot.reply_to(message, f"⚠️ Lỗi batch {i//batch_size+1}: API key bị lỗi hoặc rate limit, đã tự động chuyển sang key khác")
+                    else:
+                        bot.reply_to(message, f"⚠️ Lỗi batch {i//batch_size+1}: {error_msg}")
+                    
+                    # Không break để tiếp tục với batch tiếp theo
+                    continue
                 time.sleep(1)
                 
     finally:
