@@ -41,7 +41,7 @@ def search_domains(domains, max_retries=3):
             
             try:
                 api_logger.info(f"Thử với key {key_index + 1}/{len(SNUSBASE_API_KEYS)} (lần thử {attempt + 1}/{max_retries})")
-                api_logger.info("Request: {data}")
+                api_logger.info(f"Request: {data}")
                 response = requests.post(SNUSBASE_API_URL, headers=headers, json=data, timeout=30)
                 if response.status_code == 200:
                     api_logger.info(f"Response: {response.status_code} {response.text[:500]}")
