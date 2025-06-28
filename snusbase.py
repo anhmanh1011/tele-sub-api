@@ -41,10 +41,10 @@ def search_domains(domains, max_retries=3):
             
             try:
                 api_logger.info(f"Thử với key {key_index + 1}/{len(SNUSBASE_API_KEYS)} (lần thử {attempt + 1}/{max_retries})")
+                api_logger.info("Request: {data}")
                 response = requests.post(SNUSBASE_API_URL, headers=headers, json=data, timeout=30)
-                
                 if response.status_code == 200:
-                    api_logger.info(f"Thành công với key {key_index + 1}")
+                    api_logger.info(f"Response: {response.status_code} {response.text[:500]}")
                     return response.json()
                 elif response.status_code == 401:
                     api_logger.warning(f"Key {key_index + 1} không hợp lệ (401), thử key tiếp theo")
