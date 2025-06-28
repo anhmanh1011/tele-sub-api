@@ -5,6 +5,7 @@ from telebot.types import Message, InputFile
 from snusbase import search_domains
 import logging
 from datetime import datetime
+import time
 
 # Cấu hình logging cho ứng dụng
 logging.basicConfig(
@@ -77,7 +78,9 @@ def handle_document(message: Message):
                     user_id = message.from_user.id if message.from_user else "unknown"
                     logging.error(f"Lỗi khi truy vấn batch {i//batch_size+1} cho user {user_id}: {e}")
                     bot.reply_to(message, f"Lỗi khi truy vấn batch {i//batch_size+1}: {e}")
-                    break
+                    # break
+                time.sleep(1)
+                
     finally:
         with open(result_file, "rb") as f:
             bot.send_document(message.chat.id, f, caption="Kết quả email tìm thấy!", reply_to_message_id=message.message_id)
