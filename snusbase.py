@@ -25,11 +25,16 @@ def search_domains(domains, max_retries=3):
     """
     Tìm kiếm domains với khả năng tự động chuyển key khi gặp lỗi
     """
+    all_keys_exhausted = False
+    
     for attempt in range(max_retries):
+        keys_tried = 0
+        
         for key_index, api_key in enumerate(SNUSBASE_API_KEYS):
             if not api_key.strip():
                 continue
                 
+            keys_tried += 1
             headers = {
                 "Auth": api_key,
                 "Content-Type": "application/json"
@@ -43,6 +48,7 @@ def search_domains(domains, max_retries=3):
                 api_logger.info(f"Thử với key {key_index + 1}/{len(SNUSBASE_API_KEYS)} (lần thử {attempt + 1}/{max_retries})")
                 api_logger.info(f"Request: {data}")
                 response = requests.post(SNUSBASE_API_URL, headers=headers, json=data, timeout=30)
+                
                 if response.status_code == 200:
                     api_logger.info(f"Response: {response.status_code} {response.text[:500]}")
                     return response.json()
@@ -66,12 +72,22 @@ def search_domains(domains, max_retries=3):
                 api_logger.error(f"Lỗi không xác định với key {key_index + 1}: {str(e)}")
                 continue
         
+        # Kiểm tra xem có phải tất cả key đều bị rate limit không
+        if keys_tried == 0:
+            all_keys_exhausted = True
+            break
+            
         # Nếu đã thử hết tất cả key mà vẫn lỗi, chờ một chút rồi thử lại
         if attempt < max_retries - 1:
             wait_time = (attempt + 1) * 5  # Tăng thời gian chờ theo số lần thử
             api_logger.info(f"Đã thử hết tất cả key, chờ {wait_time} giây trước khi thử lại")
             time.sleep(wait_time)
     
-    # Nếu đã thử hết tất cả key và lần thử mà vẫn lỗi
-    api_logger.error("Đã thử hết tất cả key và lần thử mà vẫn không thành công")
-    raise Exception("Không thể kết nối với Snusbase API sau khi thử tất cả key") 
+    # Tạo thông báo lỗi chi tiết
+    if all_keys_exhausted:
+        error_msg = "Tất cả API keys đều không hợp lệ hoặc bị rate limit"
+    else:
+        error_msg = "Không thể kết nối với Snusbase API sau khi thử tất cả key"
+    
+    api_logger.error(f"Đã thử hết tất cả key và lần thử mà vẫn không thành công: {error_msg}")
+    raise Exception(error_msg) 
