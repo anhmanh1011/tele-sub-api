@@ -100,20 +100,20 @@ def handle_document(message: Message):
 
                     # Lưu domain đã xử lý thành công
                     processed_domains.extend(current_domains)
+                    if data:
+                        # Ghi emails vào file kết quả
+                        for table, entries in data.get("results", {}).items():
+                            for entry in entries:
+                                if (
+                                    "email" in entry
+                                    and entry["email"] not in written_emails
+                                ):
+                                    f_result.write(entry["email"] + "\n")
+                                    written_emails.add(entry["email"])
 
-                    # Ghi emails vào file kết quả
-                    for table, entries in data.get("results", {}).items():
-                        for entry in entries:
-                            if (
-                                "email" in entry
-                                and entry["email"] not in written_emails
-                            ):
-                                f_result.write(entry["email"] + "\n")
-                                written_emails.add(entry["email"])
-
-                    logging.info(
-                        f"Batch {batch_index} hoàn thành thành công, tìm thấy {len(written_emails)} emails"
-                    )
+                        logging.info(
+                            f"Batch {batch_index} hoàn thành thành công, tìm thấy {len(written_emails)} emails"
+                        )
 
                 except Exception as e:
                     user_id = message.from_user.id if message.from_user else "unknown"

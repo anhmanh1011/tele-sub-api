@@ -54,10 +54,10 @@ def search_domains(domains, max_retries=3):
                     return response.json()
                 elif response.status_code == 401:
                     api_logger.warning(f"Key {key_index + 1} không hợp lệ (401), thử key tiếp theo")
-                    continue
+                    return None
                 elif response.status_code == 429:
                     api_logger.warning(f"Key {key_index + 1} bị rate limit (429), thử key tiếp theo")
-                    continue
+                    return None
                 else:
                     api_logger.error(f"Lỗi HTTP {response.status_code} với key {key_index + 1}: {response.text[:200]}")
                     response.raise_for_status()
