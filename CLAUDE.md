@@ -20,6 +20,12 @@ bash deploy.sh
 
 # Set webhook after deployment
 python set_webhook.py <TOKEN> <CLOUD_FUNCTION_URL>
+
+# Check webhook status
+python set_webhook.py <TOKEN> --info
+
+# View Cloud Function logs
+gcloud functions logs read snusbase-telegram-bot --region=asia-southeast1 --gen2 --limit=30
 ```
 
 ## Architecture
@@ -40,6 +46,8 @@ python set_webhook.py <TOKEN> <CLOUD_FUNCTION_URL>
 
 **set_webhook.py** - Utility to register/manage Telegram webhook URL
 
+**snuscheck.py** - Legacy polling-based bot (deprecated, use main.py)
+
 ## Configuration
 
 **Local development:** Use `config.json`
@@ -50,13 +58,28 @@ python set_webhook.py <TOKEN> <CLOUD_FUNCTION_URL>
 }
 ```
 
-**Cloud Functions:** Use environment variables
-- `TELEGRAM_TOKEN` - Telegram bot token
-- `SNUSBASE_API_KEYS` - JSON array string: `["key1","key2"]`
+**Cloud Functions:** Use `env.yaml` (not committed to git)
+```yaml
+TELEGRAM_TOKEN: "bot_token"
+SNUSBASE_API_KEYS: '["key1","key2"]'
+```
 
-## Deployment to Cloud Functions
+## Deployment
 
-1. Update credentials in `deploy.sh`
+**GCP Project:** `domain-data-pipeline`
+**Region:** `asia-southeast1`
+**Function name:** `snusbase-telegram-bot`
+**URL:** `https://snusbase-telegram-bot-vhgpl5vnya-as.a.run.app`
+
+Deploy steps:
+1. Update credentials in `env.yaml`
 2. Run `bash deploy.sh`
-3. Copy the function URL from output
-4. Register webhook: `python set_webhook.py <TOKEN> <URL>`
+3. Register webhook: `python set_webhook.py <TOKEN> <URL>`
+
+## Technical Notes
+
+**pyTelegramBotAPI webhook issue:** `bot.process_new_updates()` does not trigger handlers properly in Cloud Functions. Solution: Parse message directly from JSON and call handlers explicitly (see `telegram_webhook` function in main.py).
+
+**Sensitive files (not in git):**
+- `config.json` - Local dev credentials
+- `env.yaml` - Cloud Functions credentials
