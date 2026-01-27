@@ -1,21 +1,47 @@
 import logging
 import json
+import os
 import requests
 import time
 
 # Cấu hình logging cho API
 api_logger = logging.getLogger("api_logger")
-api_handler = logging.FileHandler("api.log", encoding="utf-8")
-api_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-if not api_logger.hasHandlers():
-    api_logger.addHandler(api_handler)
 api_logger.setLevel(logging.INFO)
 
-with open("config.json", "r") as f:
-    config = json.load(f)
+# Chỉ thêm handler nếu chưa có (tránh duplicate logs)
+if not api_logger.hasHandlers():
+    # File handler cho local development
+    try:
+        api_handler = logging.FileHandler("api.log", encoding="utf-8")
+        api_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        api_logger.addHandler(api_handler)
+    except (OSError, PermissionError):
+        # Cloud Functions có thể không cho phép ghi file ngoài /tmp
+        pass
+    # Stream handler cho Cloud Functions logs
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    api_logger.addHandler(stream_handler)
 
-# Hỗ trợ nhiều API key
-SNUSBASE_API_KEYS = config.get("SNUSBASE_API_KEYS", [config.get("SNUSBASE_API_KEY", "")])
+# Đọc API keys từ environment variable (JSON array string)
+# Hỗ trợ cả env var và config.json cho local development
+SNUSBASE_API_KEYS = []
+env_keys = os.environ.get("SNUSBASE_API_KEYS", "")
+if env_keys:
+    try:
+        SNUSBASE_API_KEYS = json.loads(env_keys)
+    except json.JSONDecodeError:
+        # Nếu không phải JSON, coi như single key
+        SNUSBASE_API_KEYS = [env_keys]
+else:
+    # Fallback: đọc từ config.json cho local development
+    try:
+        with open("config.json", "r") as f:
+            config = json.load(f)
+        SNUSBASE_API_KEYS = config.get("SNUSBASE_API_KEYS", [config.get("SNUSBASE_API_KEY", "")])
+    except FileNotFoundError:
+        api_logger.warning("Không tìm thấy config.json và SNUSBASE_API_KEYS env var")
+
 if isinstance(SNUSBASE_API_KEYS, str):
     SNUSBASE_API_KEYS = [SNUSBASE_API_KEYS]
 
